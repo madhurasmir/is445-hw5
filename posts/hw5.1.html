@@ -1,0 +1,65 @@
+---
+layout: post
+title: HW5 - UFO Sightings Visualizations
+---
+
+<script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+
+<style>
+  body { font-family: Georgia, serif; max-width: 860px; margin: 0 auto; padding: 2rem 1rem; line-height: 1.7; }
+  h1 { font-size: 2rem; margin-bottom: 0.25rem; }
+  h2 { font-size: 1.35rem; margin-top: 2.5rem; border-bottom: 1px solid #ddd; padding-bottom: 0.4rem; }
+  .btn-row { display: flex; gap: 0.75rem; margin: 1.25rem 0; flex-wrap: wrap; }
+  .btn {
+    padding: 0.5rem 1.1rem; border-radius: 6px; text-decoration: none;
+    font-family: monospace; font-size: 0.85rem; font-weight: bold;
+    border: 2px solid #2a6ebb; color: #2a6ebb; background: #fff;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn:hover { background: #2a6ebb; color: #fff; }
+  .viz { margin: 1.5rem 0; overflow-x: auto; }
+</style>
+
+<h1>Lights in the Sky: UFO Sightings Visualized</h1>
+<p><em>IS 457 · Homework 5</em></p>
+
+<div class="btn-row">
+  <a class="btn" href="https://github.com/madhurasmir/is445-hw5/blob/main/ufo_visualizations.ipynb" target="_blank">📓 The Analysis</a>
+  <a class="btn" href="https://github.com/UIUC-iSchool-DataViz/is445_data/raw/main/ufo-scrubbed-geocoded-time-standardized-00.csv" target="_blank">📊 The Data</a>
+</div>
+
+<h2>Visualization 1 — UFO Sightings by U.S. State &amp; Decade</h2>
+
+<p>
+This heatmap shows the frequency of UFO reports across U.S. states (y-axis) and decades from the 1960s through the 2010s (x-axis). Each cell's fill intensity represents the <strong>log₁₀-transformed count</strong> of sightings for that state–decade combination. I used a log scale because raw counts are extremely skewed — California alone accounts for tens of thousands of reports in the 2000s, which would wash out all other states on a linear scale. States are sorted by total sightings descending so the most active states cluster at the top.
+</p>
+
+<p>
+For encoding, I used <strong>X: decade (ordinal)</strong> for a clean chronological column structure, <strong>Y: state (ordinal)</strong> sorted by total activity, and <strong>Color: log₁₀(count+1) (quantitative)</strong> using the <em>greens</em> sequential single-hue scheme. I chose a single-hue sequential palette because sighting count is strictly non-negative with no meaningful midpoint — a diverging scheme would imply an expected baseline that doesn't exist here. The key data transformation was grouping by <code>(state, decade)</code> in pandas after parsing datetimes, extracting year via <code>dt.year</code>, and flooring to decades with <code>year // 10 * 10</code>.
+</p>
+
+<div class="viz">
+  <div id="heatmap"></div>
+</div>
+
+<h2>Visualization 2 — Sighting Duration by UFO Shape (Interactive)</h2>
+
+<p>
+This strip plot places each individual UFO report as a semi-transparent circle, with <strong>X: log₁₀(duration in seconds) (quantitative)</strong> on the horizontal axis and <strong>Y: UFO shape (nominal)</strong> on the vertical axis, sorted by median log-duration so longer-lasting shape categories appear at top. Each of the 14 most frequently reported shapes receives a distinct hue from the <em>tableau20</em> nominal palette, chosen specifically because it is designed for perceptual separability across unordered categories. The raw duration column required coercing to numeric (many entries contained stray text), dropping zero and missing values, and computing <code>log10(duration)</code> in pandas before passing to Altair to handle the extreme right skew in reported times.
+</p>
+
+<p>
+<strong>Interactivity:</strong> A dropdown menu lets the viewer filter by UFO shape. Selecting a shape dims all other categories to near-invisible (opacity 0.04) while highlighting the selected shape at full opacity (0.55), implemented via an Altair <code>condition</code> on a bound <code>param</code> using a Vega expression string. This is essential because with 14 shapes and thousands of overlapping points, the full view is too dense to read any individual shape's distribution. The dropdown turns a noisy scatter into a clean comparative tool — you can immediately see, for example, that "disk" and "sphere" sightings cluster around shorter durations while "light" reports skew toward longer ones.
+</p>
+
+<div class="viz">
+  <div id="strip"></div>
+</div>
+
+<script>
+  const base = "https://raw.githubusercontent.com/madhurasmir/is445-hw5/main/";
+  vegaEmbed("#heatmap", base + "ufo_heatmap.json", { actions: false });
+  vegaEmbed("#strip",   base + "ufo_strip.json",   { actions: false });
+</script>
